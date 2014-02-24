@@ -42,26 +42,27 @@ public class Main extends JavaPlugin {
         getLogger().info("Checking MC servers status");
         updateStatus();
 
-        getLogger().info("minecraft.net : "             +status_mc_website);
-        getLogger().info("login.minecraft.net : "       +status_login);
-        getLogger().info("session.minecraft.net : "     +status_session);
-        getLogger().info("account.mojang.com : "        +status_account);
-        getLogger().info("auth.mojang.com : "           +status_auth);
-        getLogger().info("skins.minecraft.net : "       +status_skins);
-        getLogger().info("authserver.mojang.com : "     +status_authserver);
-        getLogger().info("sessionserver.mojang.com : "  +status_sessionserver);
+        getLogger().info("minecraft.net : "             + status_mc_website);
+        getLogger().info("login.minecraft.net : "       + status_login);
+        getLogger().info("session.minecraft.net : "     + status_session);
+        getLogger().info("account.mojang.com : "        + status_account);
+        getLogger().info("auth.mojang.com : "           + status_auth);
+        getLogger().info("skins.minecraft.net : "       + status_skins);
+        getLogger().info("authserver.mojang.com : "     + status_authserver);
+        getLogger().info("sessionserver.mojang.com : "  + status_sessionserver);
 
-        //---------------Schedule for every 5 mins (20 tics per second, 60 seconds per minute, 5 minutes)
+        //---------------Schedule for every 5 mins (20 ticks per second, 60 seconds per minute, 5 minutes)
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new CheckNewStatus(this), 5*60*20, 5*60*20);
 
 
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String labal, String[] args) {
+    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (args.length > 0) {
-            if (args[0].equalsIgnoreCase("check")) {updateStatus(); sender.sendMessage(getStatusMessage());}
-
+            if (args[0].equalsIgnoreCase("check")) {
+                updateStatus(); sender.sendMessage(getStatusMessage());
+                }
         }
         else sender.sendMessage(getStatusMessage());
 
@@ -70,8 +71,8 @@ public class Main extends JavaPlugin {
 
     public static String checkService(String service) throws IOException, ParseException {
         if(service.equals("")) service = StatusURLMinecraftNet;
-        if(service.equals("login")|service.equals("session")|service.equals("skins")) service = service + "." + StatusURLMinecraftNet;
-        if(service.equals("account")|service.equals("auth")|service.equals("authserver")|service.equals("sessionserver")) service = service + "." + StatusURLMojangtCom;
+        if(service.equals("login") | service.equals("session") | service.equals("skins")) service = service + "." + StatusURLMinecraftNet;
+        if(service.equals("account") | service.equals("auth") | service.equals("authserver")|service.equals("sessionserver")) service = service + "." + StatusURLMojangtCom;
 
         String checkurl = StatusURL + StatusURLService + service;
 
@@ -123,7 +124,7 @@ public class Main extends JavaPlugin {
         if (service.equals("authserver"))   {status_authserver = "red";     service = "authserver.minecraft.net";}
         if (service.equals("sessionserver")){status_sessionserver = "red";  service = "sessionserver.minecraft.net";}
 
-        getLogger().severe("Couldn't parse Json data from " + service + "!");
+        getLogger().severe("Couldn't parse JSON data from " + service + "!");
     }
 
     public String parseStatusColors(String s){
@@ -166,21 +167,25 @@ public class Main extends JavaPlugin {
     }
 
     public String getStatusMessage(){
-        return  "minecraft.net :            "     +parseStatusColors(status_mc_website) + "\n" +
-                "login.minecraft.net :      "     +parseStatusColors(status_login)     + "\n" +
-                "session.minecraft.net :    "     +parseStatusColors(status_session)   + "\n" +
-                "account.mojang.com :       "     +parseStatusColors(status_account)   + "\n" +
-                "auth.mojang.com :          "     +parseStatusColors(status_auth)      + "\n" +
-                "skins.minecraft.net :      "     +parseStatusColors(status_skins)     + "\n" +
-                "authserver.mojang.com :    "     +parseStatusColors(status_authserver) + "\n" +
-                "sessionserver.mojang.com : "     +parseStatusColors(status_sessionserver);
+        return  "minecraft.net :            "     + parseStatusColors(status_mc_website) + "\n" +
+                "login.minecraft.net :      "     + parseStatusColors(status_login)     + "\n" +
+                "session.minecraft.net :    "     + parseStatusColors(status_session)   + "\n" +
+                "account.mojang.com :       "     + parseStatusColors(status_account)   + "\n" +
+                "auth.mojang.com :          "     + parseStatusColors(status_auth)      + "\n" +
+                "skins.minecraft.net :      "     + parseStatusColors(status_skins)     + "\n" +
+                "authserver.mojang.com :    "     + parseStatusColors(status_authserver) + "\n" +
+                "sessionserver.mojang.com : "     + parseStatusColors(status_sessionserver);
     }
 
     private class CheckNewStatus extends BukkitRunnable {
         private Main plugin;
-        public CheckNewStatus(Main plugin){this.plugin = plugin;}
+        public CheckNewStatus(Main plugin){
+            this.plugin = plugin;
+        }
 
         @Override
-        public void run(){plugin.updateStatus();}
+        public void run(){
+            plugin.updateStatus();
+        }
     }
 }
