@@ -1,7 +1,7 @@
 name: IsMinecraftDown
 main: com.github.Gamecube762.IsMinecraftDown.Main
 author: Gamecube762
-version: 0.0.1.56
+version: 0.0.2.11
 prefix: IsMcDwn
 commands:
    IsMinecraftDown:
