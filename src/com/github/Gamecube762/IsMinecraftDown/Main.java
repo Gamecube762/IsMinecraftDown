@@ -28,7 +28,8 @@ public class Main extends JavaPlugin {
 
     private boolean debugCommands = false;
 
-    private BukkitTask checkNewStatusTask;
+    private BukkitTask statusChecker;
+    private Updater updater;
 
     public final static String StatusURL = "http://status.mojang.com/check";
     public final static String StatusURLService = "?service=";
@@ -52,6 +53,8 @@ public class Main extends JavaPlugin {
         config = new Config(this);
         getLogger().info("Loaded Config");
 
+        if (config.Settings_AutoUpdate)
+            updater = new Updater(this, 75086, this.getFile(), Updater.UpdateType.DEFAULT, false);
 
         getLogger().info("Checking MC servers status");
         updateStatus();
@@ -65,11 +68,7 @@ public class Main extends JavaPlugin {
         getLogger().info("authserver.mojang.com :    " + status_authserver);
         getLogger().info("sessionserver.mojang.com : " + status_sessionserver);
 
-        //---------------Schedule for every 5 mins (20 ticks per second, 60 seconds per minute, 5 minutes)
-		int i = config.Settings_checkDelay*60*20;
-        checkNewStatusTask = new CheckNewStatus().runTaskTimerAsynchronously(this, i, i);
-        //Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new CheckNewStatus(this), i, i);
-
+        LoadMCStats();
 
     }
 
@@ -80,12 +79,18 @@ public class Main extends JavaPlugin {
                 updateStatus();
                 sender.sendMessage(getStatusMessage());
              }
-
+            if (args[0].equalsIgnoreCase("reloadconfig")) config.loadConfig();
             if(debugCommands) {
                 if (args[0].equals("a")) announcerCheck();
                 if (args[0].equals("u")) updateStatus();
                 if (args[0].equals("s"))
                     if (args.length > 2) setStatus(args[1], args[2]); else sender.sendMessage("Needs args");
+                if (args[0].equals("cset"))
+                    if (args.length > 2) config.config.set(args[1], args[2]); else sender.sendMessage("Needs args");
+                if (args[0].equals("csave")) config.saveConfig();
+                if (args[0].equals("cclean")) config.cleanUp();
+                if (args[0].equals("creset")) config.resetConfig();
+                if (args[0].equals("mupdatec")) updateStatusChecker(config.Settings_checkDelay);
             }
         }
         else sender.sendMessage(getStatusMessage());
@@ -181,6 +186,10 @@ public class Main extends JavaPlugin {
         return s;
     }
 
+    public int getCheckDelay(){
+        return config.Settings_checkDelay;
+    }
+
     public String getStatus_mcwebsite() {
         return status_mcwebsite;
     }
@@ -227,6 +236,24 @@ public class Main extends JavaPlugin {
     private void tellAll(String s){
         for (Player p :Bukkit.getOnlinePlayers()) p.sendMessage(s);
         getLogger().info(s);
+    }
+
+    private void LoadMCStats(){
+        try {
+            Metrics metrics = new Metrics(this);
+            metrics.start();
+        } catch (IOException e) {
+            // Failed to submit the stats :-(
+            getLogger().info("Metrics Failed! D=");
+            getLogger().info("(This won't impact how the plugin works)");
+        }
+    }
+
+    protected void updateStatusChecker(int i){
+        if (statusChecker != null) statusChecker.cancel();
+        getLogger().info("Starting the Status checker with a time of " + i + " minutes");
+        i = i*60*20;
+        statusChecker = new CheckNewStatus().runTaskTimerAsynchronously(this, i, i);
     }
 
     private class CheckNewStatus extends BukkitRunnable {

@@ -1,20 +1,25 @@
 name: IsMinecraftDown
 main: com.github.Gamecube762.IsMinecraftDown.Main
 author: Gamecube762
-version: 0.0.2.11
-prefix: IsMcDwn
+version: 0.1.0.20
+prefix: IsMcDown
 commands:
    IsMinecraftDown:
       description: IsMinecraftDown
       usage: /<command>
-      permission: IsMcDwn.command
+      permission: IsMcDown.command
       permission-message: You don't have <permission>
    IsMcDwn:
       description: IsMinecraftDown
       usage: /<command>
-      permission: IsMcDwn.command
+      permission: IsMcDown.command
+      permission-message: You don't have <permission>
+   IsMcDown:
+      description: IsMinecraftDown
+      usage: /<command>
+      permission: IsMcDown.command
       permission-message: You don't have <permission>
 permissions:
-   IsMcDwn.command:
+   IsMcDown.command:
       description: command
       default: true

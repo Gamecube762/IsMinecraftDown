@@ -15,9 +15,10 @@ public class Config {
     protected File configFile;
     protected YamlConfiguration config;
 
-    protected int Settings_checkDelay;
+    protected int Settings_checkDelay = 0;
 
     protected boolean
+        Settings_AutoUpdate,
         Settings_announce_MCwebsite,
         Settings_announce_login,
         Settings_announce_session,
@@ -41,15 +42,16 @@ public class Config {
         this.main.getDataFolder().mkdirs();
 
         configFile = new File(this.main.getDataFolder(), "config.yml");
-
-        UpdateConfig();
-        LoadConfig();
-    }
-
-    public void UpdateConfig() {
         load();
 
+        updateConfig();
+        loadConfig();
+    }
+
+    public void updateConfig() {
+
         if (!config.contains("Settings.checkDelay"))                         config.set("Settings.checkDelay",           5);
+        if (!config.contains("Settings.AutoUpdate"))                         config.set("Settings.AutoUpdate",           true);
         if (!config.contains("Settings.announce.message"))                   config.set("Settings.announce.message",     "Warning, %Service% is Down!");
         if (!config.contains("Settings.announce.MCwebsite"))                 config.set("Settings.announce.MCwebsite",   false);
         if (!config.contains("Settings.announce.login"))                     config.set("Settings.announce.login",       false);
@@ -65,11 +67,12 @@ public class Config {
         save();
     }
 
-    public void LoadConfig(){
-        load();
+    public void loadConfig(){
+        load(); int a = Settings_checkDelay;
 
         Settings_checkDelay             =   config.getInt("Settings.checkDelay");
 
+        Settings_AutoUpdate             =   config.getBoolean("Settings.AutoUpdate");
         Settings_announce_MCwebsite     =   config.getBoolean("Settings.announce.MCwebsite");
         Settings_announce_login         =   config.getBoolean("Settings.announce.login");
         Settings_announce_session       =   config.getBoolean("Settings.announce.session");
@@ -83,10 +86,28 @@ public class Config {
         Settings_announce_message       =   config.getString("Settings.announce.message");
         Settings_announce_MOTDmessage   =   config.getString("Settings.announce.MOTDmessage");
 
+
+        if (Settings_checkDelay == 0) {
+            main.getLogger().info("Settings.checkDelay can't be 0, defaulting to 5");
+            Settings_checkDelay = 5;
+            saveConfig();
+        }
+
+        if (Settings_checkDelay < 0) {
+            Settings_checkDelay = Settings_checkDelay * -1;
+            main.getLogger().info("Settings can't be negative, changing to " + Settings_checkDelay);
+            saveConfig();
+        }
+
+        //If the check delay changes, we want to update the Checker
+        //check for change or if a == 0 (a will not be 0 unless plugin is starting)
+        if (a != Settings_checkDelay || a == 0) main.updateStatusChecker(Settings_checkDelay);
+
     }
 
-    public void SaveConfig() {
+    public void saveConfig() {
         config.set("Settings.checkDelay",               Settings_checkDelay);
+        config.set("Settings.AutoUpdate",               Settings_AutoUpdate);
         config.set("Settings.announce.message",         Settings_announce_message);
         config.set("Settings.announce.MCwebsite",       Settings_announce_MCwebsite);
         config.set("Settings.announce.login",           Settings_announce_login);
@@ -102,6 +123,20 @@ public class Config {
         save();
     }
 
+    //used to remove any unneeded lines in config file
+    //also reorganizes file which can get unorganized when updating
+    public void cleanUp() {
+        saveConfig();
+        loadConfig();
+        config = new YamlConfiguration();
+        saveConfig();
+    }
+
+    //used to reset the config to the defaults if needed.
+    protected void resetConfig(){
+        config = new YamlConfiguration();
+        updateConfig();
+    }
 
     private void load() { config = (configFile.exists()) ? YamlConfiguration.loadConfiguration(configFile) : new YamlConfiguration(); }
     private void save() { try {config.save(configFile);} catch (IOException e) { main.getLogger().severe("Couldn't save config file! [IOException ~ Couldn't write file]"); } }
@@ -154,5 +189,7 @@ public class Config {
         return Settings_checkDelay;
     }
 
-
+    public boolean isSettings_AutoUpdate() {
+        return Settings_AutoUpdate;
+    }
 }
