@@ -38,7 +38,6 @@ public class Main extends JavaPlugin {
 
     private String
         status_mcwebsite,
-        status_login,
         status_session,
         status_account,
         status_auth,
@@ -46,6 +45,8 @@ public class Main extends JavaPlugin {
         status_authserver,
         status_sessionserver
     ;
+
+    private final String status_login = "yellow ~ check auth";
 
     @Override
     public void onEnable() {
@@ -99,8 +100,9 @@ public class Main extends JavaPlugin {
     }
 
     public static String checkService(String service) throws IOException, ParseException {
+        if(service.equals("login")) return "yellow";
         if(service.equals("")) service = StatusURLMinecraftNet;
-        if(service.equals("login") | service.equals("session") | service.equals("skins")) service = service + "." + StatusURLMinecraftNet;
+        if(service.equals("session") | service.equals("skins")) service = service + "." + StatusURLMinecraftNet;
         if(service.equals("account") | service.equals("auth") | service.equals("authserver") | service.equals("sessionserver")) service = service + "." + StatusURLMojangtCom;
 
         String checkurl = StatusURL + StatusURLService + service;
@@ -120,7 +122,7 @@ public class Main extends JavaPlugin {
         try {
 
             try {status_mcwebsite = checkService("");}                  catch (ParseException e) {parseException("");}
-            try {status_login = checkService("login");}                 catch (ParseException e) {parseException("login");}
+            //try {status_login = checkService("login");}                 catch (ParseException e) {parseException("login");}
             try {status_session = checkService("session");}             catch (ParseException e) {parseException("session");}
             try {status_account = checkService("account");}             catch (ParseException e) {parseException("account");}
             try {status_auth = checkService("auth");}                   catch (ParseException e) {parseException("auth");}
@@ -132,7 +134,7 @@ public class Main extends JavaPlugin {
             getLogger().severe("Couldn't check the status of the MC servers! [IOException ~ Couldn't connect]");
 
             status_mcwebsite     = "red";
-            status_login         = "red";
+            //status_login         = "red";
             status_session       = "red";
             status_account       = "red";
             status_auth          = "red";
@@ -157,7 +159,7 @@ public class Main extends JavaPlugin {
 
     private void setStatus(String service, String status){
         if (service.equals(""))              status_mcwebsite     = status;
-        if (service.equals("login"))         status_login         = status;
+        //if (service.equals("login"))         status_login         = status;
         if (service.equals("session"))       status_session       = status;
         if (service.equals("account"))       status_account       = status;
         if (service.equals("auth"))          status_auth          = status;
@@ -168,7 +170,7 @@ public class Main extends JavaPlugin {
 
     private void parseException(String service) {
         if (service.equals(""))              { status_mcwebsite     = "red";  service = "minecraft.net";               }
-        if (service.equals("login"))         { status_login         = "red";  service = "login.minecraft.net";         }
+        //if (service.equals("login"))         { status_login         = "red";  service = "login.minecraft.net";         }
         if (service.equals("session"))       { status_session       = "red";  service = "session.minecraft.net";       }
         if (service.equals("account"))       { status_account       = "red";  service = "account.minecraft.net";       }
         if (service.equals("auth"))          { status_auth          = "red";  service = "auth.minecraft.net";          }

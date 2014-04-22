@@ -23,7 +23,7 @@ public class MOTDHandler implements Listener {
             String s = main.config.getSettings_announce_MOTDmessage();
             s = s.replace("%Service%","Session")    .replace("%Service%", "SessionServer")
                     .replace("%Service%", "Auth")    .replace("%Service%", "AuthServer")
-                    .replace("%Service%", "Login")   .replace("%Service%", "account")
+                    /*.replace("%Service%", "Login")*/   .replace("%Service%", "account")
                     .replace("%Service%", "skins")   .replace("%Service%", "minecraft.net")
             ;
             e.setMotd( ChatColor.translateAlternateColorCodes('&', s) );
