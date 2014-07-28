@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
@@ -16,6 +17,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Gamecube762 on 1/30/14.
@@ -32,21 +35,11 @@ public class Main extends JavaPlugin {
     private Updater updater;
 
     public final static String StatusURL = "http://status.mojang.com/check";
-    public final static String StatusURLService = "?service=";
-    public final static String StatusURLMinecraftNet = "minecraft.net";
-    public final static String StatusURLMojangtCom = "mojang.com";
 
-    private String
-        status_mcwebsite,
-        status_session,
-        status_account,
-        status_auth,
-        status_skins,
-        status_authserver,
-        status_sessionserver
-    ;
+    Date lastCheck;
 
-    private final String status_login = "yellow ~ check auth";
+    private boolean checked;
+    private JSONArray status;
 
     @Override
     public void onEnable() {
@@ -58,34 +51,29 @@ public class Main extends JavaPlugin {
             updater = new Updater(this, 75086, this.getFile(), Updater.UpdateType.DEFAULT, false);
 
         getLogger().info("Checking MC servers status");
-        updateStatus();
-
-        getLogger().info("minecraft.net :            " + status_mcwebsite);
-        getLogger().info("login.minecraft.net :      " + status_login);
-        getLogger().info("session.minecraft.net :    " + status_session);
-        getLogger().info("account.mojang.com :       " + status_account);
-        getLogger().info("auth.mojang.com :          " + status_auth);
-        getLogger().info("skins.minecraft.net :      " + status_skins);
-        getLogger().info("authserver.mojang.com :    " + status_authserver);
-        getLogger().info("sessionserver.mojang.com : " + status_sessionserver);
+        checked = updateStatus();
+        getLogger().info( getStatusMessage(false, true, false) );
 
         LoadMCStats();
-
     }
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         if (args.length > 0) {
-            if (args[0].equalsIgnoreCase("check")) {
+            if (args[0].equalsIgnoreCase("forcecheck") && sender.hasPermission("IsMcDown.command.ForceUpdateCheck")) {
                 updateStatus();
-                sender.sendMessage(getStatusMessage());
-             }
-            if (args[0].equalsIgnoreCase("reloadconfig")) config.loadConfig();
+                if (sender instanceof Player) sender.sendMessage(getStatusMessage(true, true, true));
+                else sender.sendMessage(getStatusMessage(false, true, false));
+            }
+
+            if (args[0].equalsIgnoreCase("reloadconfig") && sender.hasPermission("IsMcDown.command.ReloadConfig"))
+                config.loadConfig();
+
+
+
             if(debugCommands) {
                 if (args[0].equals("a")) announcerCheck();
                 if (args[0].equals("u")) updateStatus();
-                if (args[0].equals("s"))
-                    if (args.length > 2) setStatus(args[1], args[2]); else sender.sendMessage("Needs args");
                 if (args[0].equals("cset"))
                     if (args.length > 2) config.config.set(args[1], args[2]); else sender.sendMessage("Needs args");
                 if (args[0].equals("csave")) config.saveConfig();
@@ -93,92 +81,41 @@ public class Main extends JavaPlugin {
                 if (args[0].equals("creset")) config.resetConfig();
                 if (args[0].equals("mupdatec")) updateStatusChecker(config.Settings_checkDelay);
             }
+
+            if(args[0].equalsIgnoreCase("about")) sender.sendMessage(
+                    "IsMinecraftDown by Gamecube762 \n" +
+                    "Version: " + getDescription().getVersion() +
+                    (config.Settings_AutoUpdate ? "\nLatest File: " + updater.getLatestName() : "")
+            );
         }
-        else sender.sendMessage(getStatusMessage());
+        else {
+            if (sender instanceof Player) sender.sendMessage(getStatusMessage(true, true, true));
+            else sender.sendMessage(getStatusMessage(false, true, false));
+        }
 
         return true;
-    }
-
-    public static String checkService(String service) throws IOException, ParseException {
-        if(service.equals("login")) return "yellow";
-        if(service.equals("")) service = StatusURLMinecraftNet;
-        if(service.equals("session") | service.equals("skins")) service = service + "." + StatusURLMinecraftNet;
-        if(service.equals("account") | service.equals("auth") | service.equals("authserver") | service.equals("sessionserver")) service = service + "." + StatusURLMojangtCom;
-
-        String checkurl = StatusURL + StatusURLService + service;
-
-        URL url = new URL(checkurl);
-        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
-
-        Object obj = parser.parse(in);
-        JSONObject jsonObject = (JSONObject) obj;
-
-        return (String) jsonObject.get(service);
-
     }
 
     public boolean updateStatus() {
-
         try {
-
-            try {status_mcwebsite = checkService("");}                  catch (ParseException e) {parseException("");}
-            //try {status_login = checkService("login");}                 catch (ParseException e) {parseException("login");}
-            try {status_session = checkService("session");}             catch (ParseException e) {parseException("session");}
-            try {status_account = checkService("account");}             catch (ParseException e) {parseException("account");}
-            try {status_auth = checkService("auth");}                   catch (ParseException e) {parseException("auth");}
-            try {status_skins = checkService("skins");}                 catch (ParseException e) {parseException("skins");}
-            try {status_authserver = checkService("authserver");}       catch (ParseException e) {parseException("authserver");}
-            try {status_sessionserver = checkService("sessionserver");} catch (ParseException e) {parseException("sessionserver");}
-
-        } catch (IOException e) {
-            getLogger().severe("Couldn't check the status of the MC servers! [IOException ~ Couldn't connect]");
-
-            status_mcwebsite     = "red";
-            //status_login         = "red";
-            status_session       = "red";
-            status_account       = "red";
-            status_auth          = "red";
-            status_skins         = "red";
-            status_authserver    = "red";
-            status_sessionserver = "red";
-            return false;
+            status = getServicesStatus();
+            lastCheck = new Date();
+            return true;
         }
-        return true;
+        catch (IOException e) {getLogger().severe("Couldn't check the status of the MC servers! [IOException ~ Couldn't connect]");}
+        catch (ParseException e) {getLogger().severe("Couldn't read the status of the MC servers! [ParseException ~ Couldn't parse]");}
+
+        return false;
     }
 
-    public void announcerCheck(){//ToDo: Implement non-spamm form of announcing for when multiple are red
-        if (config.Settings_announce_MCwebsite     & status_mcwebsite.equals("red"))     tellAll(config.Settings_announce_message.replace("%Service%", "minecraft.net"));
-        if (config.Settings_announce_login         & status_login.equals("red"))         tellAll(config.Settings_announce_message.replace("%Service%", "login"));
-        if (config.Settings_announce_session       & status_session.equals("red"))       tellAll(config.Settings_announce_message.replace("%Service%", "session"));
-        if (config.Settings_announce_account       & status_account.equals("red"))       tellAll(config.Settings_announce_message.replace("%Service%", "account"));
-        if (config.Settings_announce_auth          & status_auth.equals("red"))          tellAll(config.Settings_announce_message.replace("%Service%", "auth"));
-        if (config.Settings_announce_skins         & status_skins.equals("red"))         tellAll(config.Settings_announce_message.replace("%Service%", "skins"));
-        if (config.Settings_announce_authserver    & status_authserver.equals("red"))    tellAll(config.Settings_announce_message.replace("%Service%", "authserver"));
-        if (config.Settings_announce_sessionserver & status_sessionserver.equals("red")) tellAll(config.Settings_announce_message.replace("%Service%", "sessionserver"));
-    }
-
-    private void setStatus(String service, String status){
-        if (service.equals(""))              status_mcwebsite     = status;
-        //if (service.equals("login"))         status_login         = status;
-        if (service.equals("session"))       status_session       = status;
-        if (service.equals("account"))       status_account       = status;
-        if (service.equals("auth"))          status_auth          = status;
-        if (service.equals("skins"))         status_skins         = status;
-        if (service.equals("authserver"))    status_authserver    = status;
-        if (service.equals("sessionserver")) status_sessionserver = status;
-    }
-
-    private void parseException(String service) {
-        if (service.equals(""))              { status_mcwebsite     = "red";  service = "minecraft.net";               }
-        //if (service.equals("login"))         { status_login         = "red";  service = "login.minecraft.net";         }
-        if (service.equals("session"))       { status_session       = "red";  service = "session.minecraft.net";       }
-        if (service.equals("account"))       { status_account       = "red";  service = "account.minecraft.net";       }
-        if (service.equals("auth"))          { status_auth          = "red";  service = "auth.minecraft.net";          }
-        if (service.equals("skins"))         { status_skins         = "red";  service = "skins.minecraft.net";         }
-        if (service.equals("authserver"))    { status_authserver    = "red";  service = "authserver.minecraft.net";    }
-        if (service.equals("sessionserver")) { status_sessionserver = "red";  service = "sessionserver.minecraft.net"; }
-
-        getLogger().severe("Couldn't parse JSON data from " + service + "!");
+    public void announcerCheck(){//ToDo: Update to new version and Implement non-spamm form of announcing for when multiple are red
+        if (config.Settings_announce_MCwebsite     & getStatus_mcwebsite().equals("red"))     tellAll(config.Settings_announce_message.replace("%Service%", "minecraft.net"));
+        if (config.Settings_announce_session       & getStatus_session().equals("red"))       tellAll(config.Settings_announce_message.replace("%Service%", "session"));
+        if (config.Settings_announce_account       & getStatus_account().equals("red"))       tellAll(config.Settings_announce_message.replace("%Service%", "account"));
+        if (config.Settings_announce_auth          & getStatus_auth().equals("red"))          tellAll(config.Settings_announce_message.replace("%Service%", "auth"));
+        if (config.Settings_announce_skins         & getStatus_skins().equals("red"))         tellAll(config.Settings_announce_message.replace("%Service%", "skins"));
+        if (config.Settings_announce_authserver    & getStatus_authserver().equals("red"))    tellAll(config.Settings_announce_message.replace("%Service%", "authserver"));
+        if (config.Settings_announce_sessionserver & getStatus_sessionserver().equals("red")) tellAll(config.Settings_announce_message.replace("%Service%", "sessionserver"));
     }
 
     public String parseStatusColors(String s){
@@ -188,51 +125,103 @@ public class Main extends JavaPlugin {
         return s;
     }
 
+    public String parseStatusIcons(String s){
+        if (s.contains("green"))  s = s.replace("green",  ChatColor.GREEN  + "✔"  + ChatColor.RESET);
+        if (s.contains("yellow")) s = s.replace("yellow", ChatColor.YELLOW + "! " + ChatColor.RESET);
+        if (s.contains("red"))    s = s.replace("red",    ChatColor.RED    + "✗"  + ChatColor.RESET);
+        return s;
+    }
+
     public int getCheckDelay(){
         return config.Settings_checkDelay;
     }
 
-    public String getStatus_mcwebsite() {
-        return status_mcwebsite;
+    private JSONObject getJSONObject(Services services){
+        for (Object a : status.toArray())
+            if ( ( (JSONObject)a ).toJSONString().contains(services.getServiceURL()) )
+                return (JSONObject) a;
+        return null;
     }
 
-    public String getStatus_login() {
-        return status_login;
+    public String getStatus(Services services) {//readStatus(getJSONObject(services).toJSONString())
+        return (checked) ? (String)getJSONObject(services).get(services.getServiceURL()) : "Check Failed";
+    }
+
+    public String getStatus_mcwebsite() {
+        return getStatus(Services.WEBSITE);
     }
 
     public String getStatus_session() {
-        return status_session;
+        return getStatus(Services.SESSION);
     }
 
     public String getStatus_account() {
-        return status_account;
+        return getStatus(Services.ACCOUNT);
     }
 
     public String getStatus_auth() {
-        return status_auth;
+        return getStatus(Services.AUTH);
     }
 
     public String getStatus_skins() {
-        return status_skins;
+        return getStatus(Services.SKINS);
     }
 
     public String getStatus_authserver() {
-        return status_authserver;
+        return getStatus(Services.AUTHSERVER);
     }
 
     public String getStatus_sessionserver() {
-        return status_sessionserver;
+        return getStatus(Services.SESSIONSERVER);
     }
 
-    public String getStatusMessage(){
-        return  "minecraft.net :            "   +   parseStatusColors(status_mcwebsite) + "\n" +
-                "login.minecraft.net :      "   +   parseStatusColors(status_login)     + "\n" +
-                "session.minecraft.net :    "   +   parseStatusColors(status_session)   + "\n" +
-                "account.mojang.com :       "   +   parseStatusColors(status_account)   + "\n" +
-                "auth.mojang.com :          "   +   parseStatusColors(status_auth)      + "\n" +
-                "skins.minecraft.net :      "   +   parseStatusColors(status_skins)     + "\n" +
-                "authserver.mojang.com :    "   +   parseStatusColors(status_authserver)+ "\n" +
-                "sessionserver.mojang.com : "   +   parseStatusColors(status_sessionserver);
+    public String getStatus_api() {
+        return getStatus(Services.API);
+    }
+
+    public String getStatus_textures() {
+        return getStatus(Services.TEXTURES);
+    }
+
+    public String getStatusMessage(boolean SimpleList, boolean SimpleNames, boolean Icons){
+        StringBuilder a = new StringBuilder("Last Checked: " + new SimpleDateFormat("HH:mm").format(lastCheck));
+
+        for (Services services : (SimpleList ? Services.values_Simple() : Services.values()) ){
+             a.append("\n ");
+             a.append(Icons ? parseStatusIcons( getStatus(services) ) : parseStatusColors(getStatus(services)));
+             a.append("   ");
+             a.append( (!SimpleNames ? services.getServiceURL() : (services.getService().equals("")) ? services.getSite() : services.getService() ));
+        }
+        return a.toString();
+    }
+
+    public boolean isWorking(String status){
+        status = ChatColor.stripColor(status);
+        return (status.equalsIgnoreCase("green") || status.equalsIgnoreCase("yellow") ||
+                status.equalsIgnoreCase("✔") || status.equalsIgnoreCase("!"));
+    }
+
+    public boolean isWorking_Authentication() {
+        return isWorking(getStatus_auth()) && isWorking(getStatus_authserver());
+    }
+
+    public boolean isWorking_sessions() {
+        return isWorking(getStatus_session()) && isWorking(getStatus_sessionserver());
+    }
+
+    public boolean canLogin() {
+        return isWorking( getStatus_account() ) && isWorking_sessions() && isWorking_Authentication() ;
+    }
+
+    public boolean canJoin() {
+        return isWorking_Authentication() && isWorking_sessions();
+    }
+
+    public static JSONArray getServicesStatus() throws IOException, ParseException {
+        URL url = new URL(StatusURL);
+        BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+
+        return  (JSONArray) parser.parse(in);
     }
 
     private void tellAll(String s){
@@ -253,9 +242,9 @@ public class Main extends JavaPlugin {
 
     protected void updateStatusChecker(int i){
         if (statusChecker != null) statusChecker.cancel();
-        getLogger().info("Starting the Status checker with a time of " + i + " minutes");
+        getLogger().info("[Status Checker] Checking every " + i + " minutes.");
         i = i*60*20;
-        statusChecker = new CheckNewStatus().runTaskTimerAsynchronously(this, i, i);
+        statusChecker = new CheckNewStatus().runTaskTimer(this, i, i);
     }
 
     private class CheckNewStatus extends BukkitRunnable {

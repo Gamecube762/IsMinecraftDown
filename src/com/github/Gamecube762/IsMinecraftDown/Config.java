@@ -59,8 +59,8 @@ public class Config {
         if (!config.contains("Settings.announce.account"))                   config.set("Settings.announce.account",     false);
         if (!config.contains("Settings.announce.auth"))                      config.set("Settings.announce.auth",        false);
         if (!config.contains("Settings.announce.skins"))                     config.set("Settings.announce.skins",       false);
-        if (!config.contains("Settings.announce.authserver"))                config.set("Settings.announce.authserver",  false);
         if (!config.contains("Settings.announce.sessionserver"))             config.set("Settings.announce.sessionserver",false);
+        if (!config.contains("Settings.announce.authserver"))                config.set("Settings.announce.authserver",  false);
         if (!config.contains("Settings.announce.MOTD"))                      config.set("Settings.announce.MOTD",        false);
         if (!config.contains("Settings.announce.MOTDmessage"))               config.set("Settings.announce.MOTDmessage", "Warning, %Service% is Down!");
 
