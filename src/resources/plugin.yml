@@ -1,7 +1,7 @@
 name: IsMinecraftDown
 main: com.github.Gamecube762.IsMinecraftDown.Main
 author: Gamecube762
-version: 0.2.0
+version: 0.2.1
 prefix: IsMcDown
 commands:
    IsMinecraftDown:
@@ -20,12 +20,19 @@ commands:
       permission: IsMcDown.command
       permission-message: You don't have <permission>
 permissions:
+   IsMcDown.command.*:
+      description: command
+      default: op
+      children:
+       IsMcDown.command: true
+       IsMcDown.command.ForceUpdateCheck: true
+       IsMcDown.command.ReloadConfig: true
    IsMcDown.command:
       description: command
       default: true
    IsMcDown.command.ForceUpdateCheck:
       description: command
-      default: false
+      default: op
    IsMcDown.command.ReloadConfig:
       description: command
-      default: false
+      default: op
