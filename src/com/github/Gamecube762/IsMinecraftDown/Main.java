@@ -1,5 +1,6 @@
 package com.github.Gamecube762.IsMinecraftDown;
 
+import net.gravitydevelopment.updater.Updater;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -12,6 +13,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+import org.mcstats.Metrics;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -244,15 +246,35 @@ public class Main extends JavaPlugin {
         if (statusChecker != null) statusChecker.cancel();
         getLogger().info("[Status Checker] Checking every " + i + " minutes.");
         i = i*60*20;
-        statusChecker = new CheckNewStatus().runTaskTimer(this, i, i);
+        statusChecker = new CheckNewStatus(this).runTaskTimerAsynchronously(this, i, i);
     }
 
     private class CheckNewStatus extends BukkitRunnable {
-        public CheckNewStatus(){}
+        private Main pl;
+
+        private CheckNewStatus(Main pl) {
+            this.pl = pl;
+        }
 
         @Override
         public void run(){
-            if ( updateStatus() ) announcerCheck();
+            try {
+                final JSONArray latest = getServicesStatus();
+                final Date cur = new Date();
+
+                Bukkit.getScheduler().runTask(pl, new Runnable() {
+                    @Override
+                    public void run() {
+                        pl.status = latest;
+                        pl.lastCheck = cur;
+
+                        announcerCheck();
+                    }
+                });
+
+            }
+            catch (IOException e) {getLogger().severe("Couldn't check the status of the MC servers! [IOException ~ Couldn't connect]");}
+            catch (ParseException e) {getLogger().severe("Couldn't read the status of the MC servers! [ParseException ~ Couldn't parse]");}
         }
     }
 }
