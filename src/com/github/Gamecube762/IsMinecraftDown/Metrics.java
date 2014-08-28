@@ -34,12 +34,23 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.scheduler.BukkitTask;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
 
@@ -53,7 +64,7 @@ public class Metrics {
     /**
      * The base url of the metrics domain
      */
-    private static final String BASE_URL = "http://report.com.github.Gamecube762.IsMinecraftDown.mcstats.org";
+    private static final String BASE_URL = "http://report.mcstats.org";
 
     /**
      * The url used to report a server's status
@@ -123,7 +134,7 @@ public class Metrics {
 
         // Do we need to create the file?
         if (configuration.get("guid", null) == null) {
-            configuration.options().header("http://com.github.Gamecube762.IsMinecraftDown.mcstats.org").copyDefaults(true);
+            configuration.options().header("http://mcstats.org").copyDefaults(true);
             configuration.save(configurationFile);
         }
 
@@ -518,7 +529,7 @@ public class Metrics {
      * @param json
      * @param key
      * @param value
-     * @throws java.io.UnsupportedEncodingException
+     * @throws UnsupportedEncodingException
      */
     private static void appendJSONPair(StringBuilder json, String key, String value) throws UnsupportedEncodingException {
         boolean isValueNumeric = false;

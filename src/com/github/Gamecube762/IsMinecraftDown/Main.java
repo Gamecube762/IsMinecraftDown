@@ -1,6 +1,5 @@
 package com.github.Gamecube762.IsMinecraftDown;
 
-import net.gravitydevelopment.updater.Updater;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -13,7 +12,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.mcstats.Metrics;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -51,6 +49,7 @@ public class Main extends JavaPlugin {
 
         if (config.Settings_AutoUpdate)
             updater = new Updater(this, 75086, this.getFile(), Updater.UpdateType.DEFAULT, false);
+        updater.getResult();
 
         getLogger().info("Checking MC servers status");
         checked = updateStatus();
