@@ -25,8 +25,8 @@ public class Config {
         Settings_announce_account,
         Settings_announce_auth,
         Settings_announce_skins,
-        Settings_announce_authserver,
-        Settings_announce_sessionserver,
+        Settings_announce_textures,
+        Settings_announce_api,
         Settings_announce_MOTD
     ;
 
@@ -59,10 +59,12 @@ public class Config {
         if (!config.contains("Settings.announce.account"))                   config.set("Settings.announce.account",     false);
         if (!config.contains("Settings.announce.auth"))                      config.set("Settings.announce.auth",        false);
         if (!config.contains("Settings.announce.skins"))                     config.set("Settings.announce.skins",       false);
-        if (!config.contains("Settings.announce.sessionserver"))             config.set("Settings.announce.sessionserver",false);
-        if (!config.contains("Settings.announce.authserver"))                config.set("Settings.announce.authserver",  false);
         if (!config.contains("Settings.announce.MOTD"))                      config.set("Settings.announce.MOTD",        false);
         if (!config.contains("Settings.announce.MOTDmessage"))               config.set("Settings.announce.MOTDmessage", "Warning, %Service% is Down!");
+
+        //removed
+        if (config.contains("Settings.announce.sessionserver"))             config.set("Settings.announce.sessionserver",null);
+        if (config.contains("Settings.announce.authserver"))                config.set("Settings.announce.authserver",  null);
 
         save();
     }
@@ -79,8 +81,8 @@ public class Config {
         Settings_announce_account       =   config.getBoolean("Settings.announce.account");
         Settings_announce_auth          =   config.getBoolean("Settings.announce.auth");
         Settings_announce_skins         =   config.getBoolean("Settings.announce.skins");
-        Settings_announce_authserver    =   config.getBoolean("Settings.announce.authserver");
-        Settings_announce_sessionserver =   config.getBoolean("Settings.announce.sessionserver");
+        Settings_announce_textures      =   config.getBoolean("Settings.announce.textures");
+        Settings_announce_api           =   config.getBoolean("Settings.announce.api");
         Settings_announce_MOTD          =   config.getBoolean("Settings.announce.MOTD");
 
         Settings_announce_message       =   config.getString("Settings.announce.message");
@@ -115,9 +117,9 @@ public class Config {
         config.set("Settings.announce.account",         Settings_announce_account);
         config.set("Settings.announce.auth",            Settings_announce_auth);
         config.set("Settings.announce.skins",           Settings_announce_skins);
-        config.set("Settings.announce.authserver",      Settings_announce_skins);
-        config.set("Settings.announce.sessionserver",   Settings_announce_authserver);
-        config.set("Settings.announce.MOTD",            Settings_announce_sessionserver);
+        config.set("Settings.announce.textures",        Settings_announce_textures);
+        config.set("Settings.announce.api",             Settings_announce_api);
+        config.set("Settings.announce.MOTD",            Settings_announce_MOTD);
         config.set("Settings.announce.MOTDmessage",     Settings_announce_MOTDmessage);
 
         save();
@@ -165,12 +167,12 @@ public class Config {
         return Settings_announce_skins;
     }
 
-    public boolean isSettings_announce_authserver() {
-        return Settings_announce_authserver;
+    public boolean isSettings_announce_textures() {
+        return Settings_announce_textures;
     }
 
-    public boolean isSettings_announce_sessionserver() {
-        return Settings_announce_sessionserver;
+    public boolean isSettings_announce_api() {
+        return Settings_announce_api;
     }
 
     public boolean isSettings_announce_MOTD() {
