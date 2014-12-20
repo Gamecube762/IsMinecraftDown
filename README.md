@@ -1,8 +1,27 @@
 IsMinecraftDown
 ===============
 
-This is a Bukkit Plugin designed to check if the Minecraft Services are online or not. This plugin is also designed with an API that plugin developers can use in their plugins.
+A Bukkit Plugin designed to check the status of the Minecraft Services.
 
-IsMinecraftDown Bukkit Plugin By Gamecube762, Requested on the [Bukkit forums] (http://forums.bukkit.org/threads/minecraft-is-down-plugin.226226/) by [raserdemon] (http://forums.bukkit.org/members/raserdemon.90919663/).
+[BukkitDev page](http://dev.bukkit.org/bukkit-plugins/isminecraftdown)
 
-Plugin Versions and info is on the [BukkitDev page](http://dev.bukkit.org/bukkit-plugins/isminecraftdown)
+Planned Support
+===============
+This plugin is being planned to support multiple server platforms.
+
+|Platform|Status|
+|  --- | --- |
+|Bukkit API| Supported |
+|Sponge| Planned - API not ready |
+|TridentSDK| Planned - API not ready |
+|Stand Alone| W.I.P. - coming soon! |
+
+Multiple platforms may use the same API(Ie: Bukkit API), this plugin should work on those platforms too.
+
+How it works
+============
+Every few minutes(set in config), this plugin will "ping" mojang's services to get their status.
+
+How to use the API
+==================
+Coming soon!

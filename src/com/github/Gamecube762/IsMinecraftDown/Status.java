@@ -1,11 +1,5 @@
 package com.github.Gamecube762.IsMinecraftDown;
 
-import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
-import org.bukkit.plugin.Plugin;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -14,130 +8,85 @@ import java.util.Date;
  */
 public class Status {
 
+    protected Date timeChecked, timeFinished;
+    protected String statusInfo;
+    protected StatusLevel statusLevel;
+    protected Service service;
+    protected UpdateStatus updateStatus = UpdateStatus.NOT_CHECKED;
 
-    public final static String StatusURL = "http://status.mojang.com/check";
-
-    protected static Date lastCheck;
-    protected static JSONArray status;
-    protected static UpdateStatus updateStatus = UpdateStatus.NOT_CHECKED;
-
-
-    public static void updateServiceStatus(Plugin plugin) {
-        updateStatus = UpdateStatus.CHECKING;
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, new CheckNewStatus(plugin));
+    public Status(Service service) {
+        this.service = service;
     }
 
-    public static Date getLastCheckDate() {
-        return lastCheck;
+    public Date getTimeChecked() {
+        return timeChecked;
     }
 
-    public static JSONArray getJSONStatusArray() {
-        return status;
+    public Date getTimeFinished() {
+        return timeFinished;
     }
 
-    public static UpdateStatus getUpdateStatus() {
+    public long getTimeUsed() {
+        if (timeFinished == null) return -1;
+        return timeFinished.getTime() - timeChecked.getTime();
+    }
+
+    public String getStatusInfo() {
+        return statusInfo;
+    }
+
+    public StatusLevel getStatusLevel() {
+        return statusLevel;
+    }
+
+    public Service getService() {
+        return service;
+    }
+
+    public void printStatus() {
+        SimpleDateFormat hm = new SimpleDateFormat("HH:mm"), hms = new SimpleDateFormat("HH:mm:ss");
+        System.out.println(String.format("===Status of %s from [%s]===", service.name(), hm.format(getTimeChecked())));
+        System.out.println("   " + service.getServiceURL());
+        System.out.println(String.format("   UpdateStatus: %s", updateStatus.name()));
+        if (updateStatus == Status.UpdateStatus.FAILED)
+            System.out.println(String.format("   Started at [%s] and failed at [%s] taking %sms long", hms.format(timeChecked), hms.format(timeFinished), getTimeUsed() ));
+        else{
+            System.out.println(String.format("   Started at [%s] and ended at [%s] taking %sms long", hms.format(timeChecked), hms.format(timeFinished), getTimeUsed() ));
+            System.out.println(String.format("   Status Level: %s", statusLevel.name()));
+            System.out.println("   " + statusInfo + "\n");
+        }
+    }
+
+    public Status.UpdateStatus getUpdateStatus() {
         return updateStatus;
     }
 
-    private static JSONObject getJSONObject(Services services){
-        for (Object a : status.toArray())
-            if ( ( (JSONObject)a ).toJSONString().contains(services.getServiceURL()) )
-                return (JSONObject) a;
-        return null;
-    }
-
-    public static String getStatus(Services services) {//readStatus(getJSONObject(services).toJSONString())
-        return (String)getJSONObject(services).get(services.getServiceURL());
-    }
-
-    public static String getStatus_mcwebsite() {
-        return getStatus(Services.WEBSITE);
-    }
-
-    public static String getStatus_session() {
-        return getStatus(Services.SESSION);
-    }
-
-    public static String getStatus_account() {
-        return getStatus(Services.ACCOUNT);
-    }
-
-    public static String getStatus_auth() {
-        return getStatus(Services.AUTH);
-    }
-
-    public static String getStatus_skins() {
-        return getStatus(Services.SKINS);
-    }
-
-    public static String getStatus_authserver() {
-        return getStatus(Services.AUTHSERVER);
-    }
-
-    public static String getStatus_sessionserver() {
-        return getStatus(Services.SESSIONSERVER);
-    }
-
-    public static String getStatus_api() {
-        return getStatus(Services.API);
-    }
-
-    public static String getStatus_textures() {
-        return getStatus(Services.TEXTURES);
-    }
-
-    public static String getStatusMessage(boolean SimpleList, boolean SimpleNames, boolean Icons){
-        if (status == null) return "Status wasn't updated! Try to force a status check.";
-
-        StringBuilder a = new StringBuilder("Last Checked: " + new SimpleDateFormat("HH:mm").format(lastCheck));
-
-        for (Services services : (SimpleList ? Services.values_Simple() : Services.values()) ){
-            a.append("\n ");
-            a.append(Icons ? parseStatusIcons( getStatus(services) ) : parseStatusColors(getStatus(services)));
-            a.append("   ");
-            a.append( (!SimpleNames ? services.getServiceURL() : (services.getService().equals("")) ? services.getSite() : services.getService() ));
-        }
-        return a.toString();
-    }
-
-    public static boolean isWorking(String status){
-        status = ChatColor.stripColor(status);
-        return (status.equalsIgnoreCase("green") || status.equalsIgnoreCase("yellow") ||
-                status.equalsIgnoreCase("✔") || status.equalsIgnoreCase("!"));
-    }
-
-    public static boolean isWorking_Authentication() {
-        return isWorking(getStatus_auth()) && isWorking(getStatus_authserver());
-    }
-
-    public static boolean isWorking_sessions() {
-        return isWorking(getStatus_session()) && isWorking(getStatus_sessionserver());
-    }
-
-    public static boolean canLogin() {
-        return isWorking( getStatus_account() ) && isWorking_sessions() && isWorking_Authentication() ;
-    }
-
-    public static boolean canJoin() {
-        return isWorking_Authentication() && isWorking_sessions();
-    }
-
-
-    public static String parseStatusColors(String s){
-        if (s.contains("green"))  s = s.replace("green",  ChatColor.GREEN  + "green"  + ChatColor.RESET);
-        if (s.contains("yellow")) s = s.replace("yellow", ChatColor.YELLOW + "yellow" + ChatColor.RESET);
-        if (s.contains("red"))    s = s.replace("red",    ChatColor.RED    + "red"    + ChatColor.RESET);
-        return s;
-    }
-
-    public static String parseStatusIcons(String s){
-        if (s.contains("green"))  s = s.replace("green",  ChatColor.GREEN  + "✔"  + ChatColor.RESET);
-        if (s.contains("yellow")) s = s.replace("yellow", ChatColor.YELLOW + "! " + ChatColor.RESET);
-        if (s.contains("red"))    s = s.replace("red",    ChatColor.RED    + "✗"  + ChatColor.RESET);
-        return s;
+    protected StatusLevel findStatusLevel() {
+        if (statusInfo == null)
+            return StatusLevel.None;
+        if (statusInfo.contains("OK"))
+            return StatusLevel.OK;
+        if (statusInfo.contains("yellow") || (statusInfo.contains("red") && statusInfo.contains("green")))
+            return StatusLevel.YELLOW;
+        if (statusInfo.contains("green") && !statusInfo.contains("yellow") && !statusInfo.contains("red"))
+            return StatusLevel.GREEN;
+        if (!statusInfo.contains("green") && !statusInfo.contains("yellow") && statusInfo.contains("red"))
+            return StatusLevel.RED;
+        return StatusLevel.Unknown;
     }
 
     public enum UpdateStatus {
-        NOT_CHECKED, CHECKING, DONE, FAILED
+        NOT_CHECKED,
+        DONE,
+        FAILED
+    }
+
+    public enum StatusLevel {
+        GREEN,
+        YELLOW,
+        RED,
+        OK,
+        Unknown,
+        None
     }
 }
